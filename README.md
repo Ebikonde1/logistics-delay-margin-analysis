@@ -70,7 +70,7 @@ for share-of-total.
 ## Building the Tableau dashboard
 
 The interactive dashboard (five sheets + a "Delivery & Margin Overview" 2×2
-layout) is published on Tableau Public — link in the repo description.
+layout) is **[live on Tableau Public](https://public.tableau.com/views/UKlogisticsDataanalysis/CostvsSLAScatter)**.
 
 To rebuild it yourself, connect Tableau (Public or Desktop) to the `outputs/`
 CSVs — they are already aggregated to the right grain, so no LODs needed for
