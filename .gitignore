@@ -1,0 +1,8 @@
+# regenerable artifacts (run: py generate_data.py)
+logistics.db
+__pycache__/
+*.pyc
+
+# Tableau local caches
+*.twbr
+~*.twb

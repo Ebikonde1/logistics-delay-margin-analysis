@@ -1,0 +1,9 @@
+depot_code,depot_name,lat,lon,shipments,on_time_pct,avg_delay_when_late_min,revenue_gbp,margin_gbp,margin_pct,sla_credits_gbp,cost_per_mile_gbp
+BHM,Birmingham Hub,52.48,-1.9,5718,88.2,140.0,1476618.0,391707.0,26.5,20521.0,2.1
+NCL,Newcastle Team Valley,54.95,-1.67,2064,93.8,175.0,655203.0,153544.0,23.4,5507.0,2.11
+LDN,London Dagenham,51.54,0.13,6987,93.9,127.0,2093978.0,541828.0,25.9,15168.0,2.07
+SOU,Southampton Nursling,50.93,-1.47,2382,94.0,134.0,942590.0,235579.0,25.0,6990.0,2.02
+BRS,Bristol Avonmouth,51.5,-2.7,3086,94.8,124.0,1220309.0,308230.0,25.3,8708.0,2.02
+GLA,Glasgow Eurocentral,55.86,-4.25,2699,94.8,135.0,1349585.0,334275.0,24.8,8990.0,1.98
+LDS,Leeds Stourton,53.78,-1.52,3428,94.9,136.0,1038221.0,264850.0,25.5,7220.0,2.07
+MAN,Manchester Trafford,53.48,-2.24,4663,95.4,133.0,1451532.0,380441.0,26.2,10059.0,2.06

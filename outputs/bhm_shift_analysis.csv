@@ -1,0 +1,7 @@
+dispatch_shift,depot_group,shipments,on_time_pct
+a. Morning (05-12),Birmingham,2700,91.7
+a. Morning (05-12),Rest of network,11771,94.6
+b. Afternoon (12-17),Birmingham,1909,87.9
+b. Afternoon (12-17),Rest of network,8397,94.4
+c. Evening (17-21),Birmingham,1109,79.9
+c. Evening (17-21),Rest of network,5141,94.6

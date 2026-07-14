@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meridian Freight — Delivery Performance &amp; Margin, FY25/26</title>
+<style>
+  :root{
+    --bg:#101418; --panel:#1a2027; --line:#2b333d; --txt:#e8edf2; --mut:#8b98a5;
+    --good:#3fb97d; --bad:#e05c5c; --warn:#e0a94f; --acc:#4f9fe0;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--txt);font:14px/1.45 "Segoe UI",system-ui,sans-serif;padding:28px}
+  h1{font-size:21px;font-weight:600}
+  .sub{color:var(--mut);margin:4px 0 22px;font-size:13px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .kpi .v{font-size:26px;font-weight:700;margin-top:2px}
+  .kpi .l{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .kpi .d{font-size:12px;margin-top:4px;color:var(--mut)}
+  .kpi .d b{font-weight:600}
+  .span2{grid-column:span 2}.span4{grid-column:span 4}
+  .card h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin-bottom:12px}
+  svg text{font:11px "Segoe UI",sans-serif;fill:var(--mut)}
+  svg .val{fill:var(--txt);font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{color:var(--mut);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  td{padding:7px 8px;border-bottom:1px solid var(--line)}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600}
+  .foot{color:var(--mut);font-size:12px;margin-top:20px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr 1fr}.span2,.span4{grid-column:span 2}}
+</style>
+</head>
+<body>
+<h1>Meridian Freight Ltd — Delivery Performance &amp; Margin</h1>
+<div class="sub">FY July 2025 – June 2026 · 31,027 shipments · 8 depots · 11 delivery regions ·
+answering: <i>which routes/depots drive late deliveries, and where is margin being lost?</i></div>
+
+<div class="grid">
+  <div class="card kpi"><div class="l">Network on-time</div><div class="v">93.3%</div>
+    <div class="d">industry band 92–95% · <b style="color:var(--bad)">Dec dipped to 89.8%</b></div></div>
+  <div class="card kpi"><div class="l">Revenue / margin</div><div class="v">£10.23m</div>
+    <div class="d">£2.62m margin after £83.2k SLA credits</div></div>
+  <div class="card kpi"><div class="l">Economy service loss</div><div class="v" style="color:var(--bad)">−£249k</div>
+    <div class="d">−38% margin beyond 300 mi · pricing leak</div></div>
+  <div class="card kpi"><div class="l">Worst depot</div><div class="v" style="color:var(--warn)">BHM 88.2%</div>
+    <div class="d">71% of its lates = loading delays, PM shifts</div></div>
+
+  <div class="card span2"><h2>On-time % by depot (red line = network 93.3%)</h2><div id="depots"></div></div>
+  <div class="card span2"><h2>Birmingham lateness by dispatch shift vs rest of network</h2><div id="shift"></div></div>
+
+  <div class="card span2"><h2>Margin % by service level × distance band</h2><div id="matrix"></div></div>
+  <div class="card span2"><h2>Monthly on-time % and SLA credits paid</h2><div id="trend"></div></div>
+
+  <div class="card span4"><h2>Depot scorecard</h2><div id="scorecard"></div></div>
+</div>
+<div class="foot">Semi-synthetic dataset modelled on UK industry benchmarks (RHA cost structure, ~93% OTD).
+Full SQL in <code>sql/analysis.sql</code>; written recommendation in <code>recommendations.md</code>.</div>
+
+<script>
+const depots=[ // code,name,onTime,shipments,creditsGBP,marginGBP,cpm,breakdownsPer1000
+ ["BHM","Birmingham Hub",88.2,5718,20521,391707,2.10,4.2],
+ ["NCL","Newcastle Team Valley",93.8,2064,5507,153544,2.11,22.8],
+ ["LDN","London Dagenham",93.9,6987,15168,541828,2.07,5.0],
+ ["SOU","Southampton Nursling",94.0,2382,6990,235579,2.02,7.6],
+ ["BRS","Bristol Avonmouth",94.8,3086,8708,308230,2.02,4.9],
+ ["GLA","Glasgow Eurocentral",94.8,2699,8990,334275,1.98,5.6],
+ ["LDS","Leeds Stourton",94.9,3428,7220,264850,2.07,8.8],
+ ["MAN","Manchester Trafford",95.4,4663,10059,380441,2.06,6.2]];
+const months=[["Jul",93.9,6087],["Aug",94.1,5021],["Sep",94.1,6205],["Oct",93.4,7252],
+ ["Nov",93.5,8487],["Dec",89.8,11923],["Jan",93.5,6602],["Feb",93.3,6231],
+ ["Mar",93.8,5404],["Apr",93.9,6537],["May",93.7,7115],["Jun",93.6,6300]];
+const matrix={rows:["Next-Day","48-Hour","Economy"],cols:["<100 mi","100–200","200–300","300+"],
+ vals:[[42.5,40.3,39.9,39.3],[24.6,21.2,20.7,20.3],[-6.3,-11.8,-36.2,-38.2]]};
+const shifts=[["Morning 05–12",91.7,94.6],["Afternoon 12–17",87.9,94.4],["Evening 17–21",79.9,94.6]];
+
+const S=(w,h)=>{const s=document.createElementNS("http://www.w3.org/2000/svg","svg");
+ s.setAttribute("viewBox",`0 0 ${w} ${h}`);s.style.width="100%";return s};
+const el=(s,t,a)=>{const e=document.createElementNS("http://www.w3.org/2000/svg",t);
+ for(const k in a)e.setAttribute(k,a[k]);s.appendChild(e);return e};
+const txt=(s,x,y,str,a={})=>{const t=el(s,"text",{x,y,...a});t.textContent=str;return t};
+
+// depot bars
+{const w=560,h=230,L=54,bw=18,gap=(h-30)/depots.length;
+ const s=S(w,h),x=v=>L+(v-80)/(100-80)*(w-L-70);
+ [...depots].sort((a,b)=>a[2]-b[2]).forEach((d,i)=>{const y=14+i*gap;
+  el(s,"rect",{x:L,y,width:x(d[2])-L,height:bw,rx:3,
+    fill:d[2]<90?"var(--bad)":d[2]<93.3?"var(--warn)":"var(--good)",opacity:.85});
+  txt(s,L-6,y+13,d[0],{"text-anchor":"end"});
+  txt(s,x(d[2])+6,y+13,d[2]+"%",{class:"val"});});
+ const nx=x(93.3);el(s,"line",{x1:nx,y1:6,x2:nx,y2:h-8,stroke:"var(--bad)","stroke-dasharray":"4 3"});
+ txt(s,nx+4,h-10,"network 93.3");document.getElementById("depots").appendChild(s);}
+
+// shift grouped bars
+{const w=560,h=230,L=8,gh=(h-40)/3;const s=S(w,h),x=v=>140+(v-70)/(100-70)*(w-150-60);
+ shifts.forEach((r,i)=>{const y=18+i*gh;
+  txt(s,L,y+16,r[0]);
+  el(s,"rect",{x:140,y:y,width:x(r[1])-140,height:16,rx:3,fill:r[1]<85?"var(--bad)":"var(--warn)",opacity:.9});
+  txt(s,x(r[1])+6,y+12,"BHM "+r[1]+"%",{class:"val"});
+  el(s,"rect",{x:140,y:y+20,width:x(r[2])-140,height:16,rx:3,fill:"var(--acc)",opacity:.55});
+  txt(s,x(r[2])+6,y+32,"network "+r[2]+"%");});
+ txt(s,140,h-6,"the rest of the network is flat across the day — Birmingham degrades shift by shift");
+ document.getElementById("shift").appendChild(s);}
+
+// margin matrix
+{const w=560,h=210,L=88,T=30,cw=(w-L-10)/4,ch=(h-T-14)/3;const s=S(w,h);
+ matrix.cols.forEach((c,j)=>txt(s,L+j*cw+cw/2,T-10,c,{"text-anchor":"middle"}));
+ matrix.rows.forEach((r,i)=>{txt(s,L-8,T+i*ch+ch/2+4,r,{"text-anchor":"end"});
+  matrix.vals[i].forEach((v,j)=>{
+   const col=v>=30?"#2e7d55":v>=15?"#3a6e4f":v>=0?"#5d6a45":v>=-15?"#8a5340":"#a03c3c";
+   el(s,"rect",{x:L+j*cw+3,y:T+i*ch+3,width:cw-6,height:ch-6,rx:6,fill:col});
+   txt(s,L+j*cw+cw/2,T+i*ch+ch/2+4,v+"%",{"text-anchor":"middle",class:"val",fill:"#fff"});});});
+ document.getElementById("matrix").appendChild(s);}
+
+// monthly trend
+{const w=560,h=210,L=40,B=h-30,T=14;const s=S(w,h);
+ const x=i=>L+i*(w-L-46)/11, y=v=>B-(v-88)/(96-88)*(B-T);
+ const yc=v=>B-(v/12000)*(B-T)*0.9;
+ months.forEach((m,i)=>{el(s,"rect",{x:x(i)-8,y:yc(m[2]),width:16,height:B-yc(m[2]),fill:"var(--acc)",opacity:.35,rx:2});
+  txt(s,x(i),B+14,m[0],{"text-anchor":"middle"});});
+ el(s,"path",{d:months.map((m,i)=>(i?"L":"M")+x(i)+" "+y(m[1])).join(" "),
+  fill:"none",stroke:"var(--good)","stroke-width":2});
+ months.forEach((m,i)=>{el(s,"circle",{cx:x(i),cy:y(m[1]),r:3,fill:m[1]<91?"var(--bad)":"var(--good)"});
+  if(m[1]<91||i==0)txt(s,x(i),y(m[1])-8,m[1]+"%",{"text-anchor":"middle",class:"val"});});
+ txt(s,x(5),yc(11923)-6,"£11.9k credits",{"text-anchor":"middle"});
+ document.getElementById("trend").appendChild(s);}
+
+// scorecard table
+{const rows=depots.map(d=>{
+  const pc=d[2]>=93.3?"var(--good)":d[2]>=90?"var(--warn)":"var(--bad)";
+  const bd=d[7]>15?`<span class="pill" style="background:#4a2626;color:#e88">${d[7]}</span>`:d[7];
+  return `<tr><td><b>${d[0]}</b> ${d[1]}</td>
+   <td class="num">${d[3].toLocaleString()}</td>
+   <td class="num"><span class="pill" style="background:#1f2a24;color:${pc}">${d[2]}%</span></td>
+   <td class="num">£${d[6].toFixed(2)}</td>
+   <td class="num">£${(d[5]/1000).toFixed(0)}k</td>
+   <td class="num">£${(d[4]/1000).toFixed(1)}k</td>
+   <td class="num">${bd}</td></tr>`}).join("");
+ document.getElementById("scorecard").innerHTML=
+  `<table><tr><th>Depot</th><th style="text-align:right">Shipments</th>
+   <th style="text-align:right">On-time</th><th style="text-align:right">Cost/mile</th>
+   <th style="text-align:right">Margin</th><th style="text-align:right">SLA credits</th>
+   <th style="text-align:right">Breakdowns /1000</th></tr>${rows}</table>`;}
+</script>
+</body>
+</html>

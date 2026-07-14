@@ -1,0 +1,7 @@
+delay_reason,incidents,sla_credits_gbp,avg_delay_min,pct_of_all_credits
+Loading Delay,714,25719.0,137.0,30.9
+Traffic Congestion,497,20366.0,116.0,24.5
+Address Issue,310,13758.0,115.0,16.5
+Customer Unavailable,282,12419.0,117.0,14.9
+Vehicle Breakdown,213,8042.0,227.0,9.7
+Adverse Weather,48,2860.0,191.0,3.4
