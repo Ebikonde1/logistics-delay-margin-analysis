@@ -69,8 +69,18 @@ for share-of-total.
 
 ## Building the Tableau dashboard
 
-Connect Tableau (Public or Desktop) to the `outputs/` CSVs — they are already
-aggregated to the right grain, so no LODs needed for the core views.
+A pre-built workbook ships in the repo: **`meridian_freight_analysis.twb`**
+(all five sheets plus the "Delivery & Margin Overview" dashboard, wired to the
+`outputs/` CSVs).
+
+> **Note if you cloned this repo:** the workbook stores absolute data paths
+> (`C:/Users/DELL/logistics-portfolio-project/outputs/…`). On first open,
+> Tableau will ask you to locate the files — point it at the `outputs/` folder
+> of your clone and every sheet will populate.
+
+To build it from scratch instead, connect Tableau (Public or Desktop) to the
+`outputs/` CSVs — they are already aggregated to the right grain, so no LODs
+needed for the core views.
 
 **Sheet 1 — Late-delivery heatmap (route_performance.csv)**
 Map: drag `region_lat`/`region_lon` to Rows/Columns as continuous dimensions,
